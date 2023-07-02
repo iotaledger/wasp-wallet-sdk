@@ -1,6 +1,6 @@
 package methods
 
-import "github.com/iotaledger/wasp_wallet_sdk/types"
+import "github.com/iotaledger/wasp-wallet-sdk/types"
 
 type GenerateEd25519AddressMethodData struct {
 	// AccountIndex corresponds to the JSON schema field "accountIndex".

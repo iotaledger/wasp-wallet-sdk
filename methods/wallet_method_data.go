@@ -1,6 +1,6 @@
 package methods
 
-import "github.com/iotaledger/wasp_wallet_sdk/types"
+import "github.com/iotaledger/wasp-wallet-sdk/types"
 
 type BackupMethodData struct {
 	// Destination corresponds to the JSON schema field "destination".

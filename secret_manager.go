@@ -3,8 +3,8 @@ package wasp_wallet_sdk
 import (
 	"errors"
 
-	"github.com/iotaledger/wasp_wallet_sdk/methods"
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	"github.com/iotaledger/wasp-wallet-sdk/methods"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
 
 type SecretManager struct {

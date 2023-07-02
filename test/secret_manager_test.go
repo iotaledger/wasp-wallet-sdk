@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/wasp_wallet_sdk"
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	wasp_wallet_sdk "github.com/iotaledger/wasp-wallet-sdk"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
 
 /**

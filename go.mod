@@ -1,4 +1,4 @@
-module github.com/iotaledger/wasp_wallet_sdk
+module github.com/iotaledger/wasp-wallet-sdk
 
 go 1.20
 

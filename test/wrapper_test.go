@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 
 	"github.com/stretchr/testify/require"
 )

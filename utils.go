@@ -1,7 +1,7 @@
 package wasp_wallet_sdk
 
 import (
-	"github.com/iotaledger/wasp_wallet_sdk/methods"
+	"github.com/iotaledger/wasp-wallet-sdk/methods"
 )
 
 type Utils struct {

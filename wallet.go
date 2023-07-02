@@ -1,8 +1,8 @@
 package wasp_wallet_sdk
 
 import (
-	"github.com/iotaledger/wasp_wallet_sdk/methods"
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	"github.com/iotaledger/wasp-wallet-sdk/methods"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
 
 type Wallet struct {

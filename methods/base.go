@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
 
 type NoType any

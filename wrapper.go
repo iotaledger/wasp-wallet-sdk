@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/iotaledger/wasp_wallet_sdk/lib_loader"
-	"github.com/iotaledger/wasp_wallet_sdk/types"
+	"github.com/iotaledger/wasp-wallet-sdk/lib_loader"
+	"github.com/iotaledger/wasp-wallet-sdk/types"
 
 	"github.com/ebitengine/purego"
 )
