@@ -12,6 +12,42 @@ type SecretManager struct {
 	secretManagerPtr IotaSecretManagerPtr
 }
 
+func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecretManager) (*SecretManager, error) {
+	secretManagerPtr, err := sdk.CreateSecretManager(mnemonicOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretManager{
+		sdk:              sdk,
+		secretManagerPtr: secretManagerPtr,
+	}, nil
+}
+
+func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.StrongholdSecretManagerStronghold) (*SecretManager, error) {
+	secretManagerPtr, err := sdk.CreateSecretManager(types.StrongholdSecretManager{Stronghold: strongholdOptions})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretManager{
+		sdk:              sdk,
+		secretManagerPtr: secretManagerPtr,
+	}, nil
+}
+
+func NewLedgerSecretManager(sdk *IOTASDK, ledgerOptions types.LedgerNanoSecretManager) (*SecretManager, error) {
+	secretManagerPtr, err := sdk.CreateSecretManager(ledgerOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SecretManager{
+		sdk:              sdk,
+		secretManagerPtr: secretManagerPtr,
+	}, nil
+}
+
 func (s *SecretManager) Destroy() {
 	_ = s.sdk.DestroySecretManager(s.secretManagerPtr)
 }
@@ -126,40 +162,4 @@ func (s *SecretManager) SignTransactionEssence(txEssence types.HexEncodedString,
 	}
 
 	return methods.ParseResponse[types.Ed25519Signature](signedMessageStr, err)
-}
-
-func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecretManager) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(mnemonicOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SecretManager{
-		sdk:              sdk,
-		secretManagerPtr: secretManagerPtr,
-	}, nil
-}
-
-func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.StrongholdSecretManagerStronghold) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(types.StrongholdSecretManager{Stronghold: strongholdOptions})
-	if err != nil {
-		return nil, err
-	}
-
-	return &SecretManager{
-		sdk:              sdk,
-		secretManagerPtr: secretManagerPtr,
-	}, nil
-}
-
-func NewLedgerSecretManager(sdk *IOTASDK, ledgerOptions types.LedgerNanoSecretManager) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(ledgerOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SecretManager{
-		sdk:              sdk,
-		secretManagerPtr: secretManagerPtr,
-	}, nil
 }
