@@ -30,12 +30,6 @@ func CreateAccountMethod[T CreateAccountPayloadMethodData](data T) BaseRequest[T
 	return NewBaseRequest(method, data)
 }
 
-func GenerateMnemonicMethod() BaseRequest[NoType] {
-	method := "generateMnemonic"
-
-	return NewBaseRequestNoData(method)
-}
-
 func GetAccountIndexesMethod() BaseRequest[NoType] {
 	method := "getAccountIndexes"
 
@@ -110,6 +104,12 @@ func StopBackgroundSyncMethod() BaseRequest[NoType] {
 
 func UpdateNodeAuthMethod[T UpdateNodeAuthMethodData](data T) BaseRequest[T] {
 	method := "updateNodeAuth"
+
+	return NewBaseRequest(method, data)
+}
+
+func GenerateEd25519AddressMethod[T GenerateEd25519AddressMethodData](data T) BaseRequest[T] {
+	method := "generateEd25519Address"
 
 	return NewBaseRequest(method, data)
 }

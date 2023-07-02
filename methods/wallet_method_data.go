@@ -37,11 +37,9 @@ type CreateAccountPayloadMethodData struct {
 	Bech32Hrp string `json:"bech32Hrp,omitempty" yaml:"bech32Hrp,omitempty" mapstructure:"bech32Hrp,omitempty"`
 }
 
-type AccountId string
-
 type GetAccountMethodData struct {
-	// AccountId corresponds to the JSON schema field "accountId".
-	AccountId AccountId `json:"accountId" yaml:"accountId" mapstructure:"accountId"`
+	// AccountID corresponds to the JSON schema field "accountId".
+	AccountID string `json:"accountId" yaml:"accountId" mapstructure:"accountId"`
 }
 
 type SetDefaultSyncOptionsMethodData struct {
@@ -116,6 +114,6 @@ type UpdateNodeAuthMethodData struct {
 	// Auth corresponds to the JSON schema field "auth".
 	Auth *types.IAuth `json:"auth,omitempty" yaml:"auth,omitempty" mapstructure:"auth,omitempty"`
 
-	// Url corresponds to the JSON schema field "url".
-	Url string `json:"url" yaml:"url" mapstructure:"url"`
+	// URL corresponds to the JSON schema field "url".
+	URL string `json:"url" yaml:"url" mapstructure:"url"`
 }

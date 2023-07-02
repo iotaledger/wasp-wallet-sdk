@@ -9,7 +9,7 @@ import (
 )
 
 func TestFirstCon(t *testing.T) {
-	sdk := InitTest(t)
+	sdk := GetOrInitTest(t)
 
 	clientPtr, err := sdk.CreateClient(types.ClientOptions{
 		PrimaryNode: ShimmerNetworkAPI,

@@ -3,6 +3,8 @@ package methods
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/iotaledger/wasp_wallet_sdk/types"
 )
 
 type NoType any
@@ -35,7 +37,7 @@ type ResponseEnvelope struct {
 	Payload json.RawMessage `json:"payload"`
 }
 
-func ParseResponse[T any](responseString string, responseErr error) (*T, error) {
+func parseResponseEnvelope(responseString string, responseErr error) (*ResponseEnvelope, error) {
 	if responseErr != nil {
 		return nil, responseErr
 	}
@@ -56,10 +58,30 @@ func ParseResponse[T any](responseString string, responseErr error) (*T, error) 
 		return nil, errors.New(errorResponse.ErrorMessage)
 	}
 
+	return &responseEnvelope, nil
+}
+
+// ParseResponse returns a typed response object
+func ParseResponse[T any](responseString string, responseErr error) (*T, error) {
+	responseEnvelope, err := parseResponseEnvelope(responseString, responseErr)
+	if err != nil {
+		return nil, err
+	}
+
 	response := new(T)
 	if err := json.Unmarshal(responseEnvelope.Payload, response); err != nil {
 		return nil, err
 	}
 
 	return response, nil
+}
+
+// ParseResponseStatus Returns true or false, whether the request succeeded or not.
+func ParseResponseStatus(responseString string, responseErr error) (bool, error) {
+	responseEnvelope, err := parseResponseEnvelope(responseString, responseErr)
+	if err != nil {
+		return false, err
+	}
+
+	return responseEnvelope.Type == types.OperationSuccess, nil
 }

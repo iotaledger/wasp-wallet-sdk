@@ -3,8 +3,9 @@ package types
 type CoinType uint32
 
 const (
-	CoinTypeSMR  CoinType = 4219
-	CoinTypeIOTA CoinType = 4218
+	CoinTypeEther CoinType = 60
+	CoinTypeSMR   CoinType = 4219
+	CoinTypeIOTA  CoinType = 4218
 )
 
 type WalletType uint32
@@ -118,7 +119,7 @@ type InputSigningDataOutput map[string]interface{}
 
 type IOutputMetadataResponse struct {
 	// The block id the output was contained in.
-	BlockId HexEncodedString `json:"blockId" yaml:"blockId" mapstructure:"blockId"`
+	BlockID HexEncodedString `json:"blockId" yaml:"blockId" mapstructure:"blockId"`
 
 	// Is the output spent.
 	IsSpent bool `json:"isSpent" yaml:"isSpent" mapstructure:"isSpent"`
@@ -142,10 +143,10 @@ type IOutputMetadataResponse struct {
 	OutputIndex float64 `json:"outputIndex" yaml:"outputIndex" mapstructure:"outputIndex"`
 
 	// The transaction id for the output.
-	TransactionId HexEncodedString `json:"transactionId" yaml:"transactionId" mapstructure:"transactionId"`
+	TransactionID HexEncodedString `json:"transactionId" yaml:"transactionId" mapstructure:"transactionId"`
 
 	// The transaction this output was spent with.
-	TransactionIdSpent *HexEncodedString `json:"transactionIdSpent,omitempty" yaml:"transactionIdSpent,omitempty" mapstructure:"transactionIdSpent,omitempty"`
+	TransactionIDSpent *HexEncodedString `json:"transactionIdSpent,omitempty" yaml:"transactionIdSpent,omitempty" mapstructure:"transactionIdSpent,omitempty"`
 }
 
 // Data for transaction inputs for signing and ordering of unlock blocks
@@ -196,4 +197,38 @@ type PreparedTransactionData struct {
 
 	// Optional remainder output information
 	Remainder *Remainder `json:"remainder,omitempty" yaml:"remainder,omitempty" mapstructure:"remainder,omitempty"`
+}
+
+// A range with start and end values.
+type Range struct {
+	// End corresponds to the JSON schema field "end".
+	End uint32 `json:"end" yaml:"end" mapstructure:"end"`
+
+	// Start corresponds to the JSON schema field "start".
+	Start uint32 `json:"start" yaml:"start" mapstructure:"start"`
+}
+
+func NewRange(start uint32, end uint32) Range {
+	return Range{Start: start, End: end}
+}
+
+// Input options for GenerateAddresses
+type IGenerateAddressesOptions struct {
+	// AccountIndex corresponds to the JSON schema field "accountIndex".
+	AccountIndex uint32 `json:"accountIndex,omitempty" yaml:"accountIndex,omitempty" mapstructure:"accountIndex,omitempty"`
+
+	// Bech32 human readable part
+	Bech32Hrp string `json:"bech32Hrp,omitempty" yaml:"bech32Hrp,omitempty" mapstructure:"bech32Hrp,omitempty"`
+
+	// CoinType corresponds to the JSON schema field "coinType".
+	CoinType CoinType `json:"coinType,omitempty" yaml:"coinType,omitempty" mapstructure:"coinType,omitempty"`
+
+	// Internal addresses
+	Internal bool `json:"internal,omitempty" yaml:"internal,omitempty" mapstructure:"internal,omitempty"`
+
+	// Options corresponds to the JSON schema field "options".
+	Options *IGenerateAddressOptions `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`
+
+	// Range corresponds to the JSON schema field "range".
+	Range Range `json:"range,omitempty" yaml:"range,omitempty" mapstructure:"range,omitempty"`
 }

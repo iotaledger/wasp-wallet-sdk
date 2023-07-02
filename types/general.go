@@ -1,7 +1,9 @@
 package types
 
-type IBip32Chain [5]uint32
-type HexEncodedString string
+type (
+	IBip32Chain      [5]uint32
+	HexEncodedString string
+)
 
 type ILoggerConfigLevelFilter string
 
@@ -12,6 +14,10 @@ const (
 	LevelFilterInfo  ILoggerConfigLevelFilter = "info"
 	LevelFilterDebug ILoggerConfigLevelFilter = "debug"
 	LevelFilterTrace ILoggerConfigLevelFilter = "trace"
+)
+
+const (
+	OperationSuccess string = "ok"
 )
 
 // Logger output configuration.

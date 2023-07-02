@@ -3,8 +3,6 @@ package wasp_wallet_sdk
 import (
 	"encoding/json"
 	"errors"
-	"strings"
-	"unsafe"
 
 	"github.com/iotaledger/wasp_wallet_sdk/lib_loader"
 	"github.com/iotaledger/wasp_wallet_sdk/types"
@@ -36,17 +34,18 @@ type IOTASDK struct {
 	libCreateWallet        func(string) IotaWalletPtr
 	libCreateSecretManager func(string) IotaSecretManagerPtr
 
-	libDestroyClient        func(ptr IotaClientPtr) bool
-	libDestroyWallet        func(ptr IotaWalletPtr) bool
-	libDestroySecretManager func(ptr IotaSecretManagerPtr) bool
-	libDestroyString        func(unsafe.Pointer) bool
+	libDestroyClient        func(IotaClientPtr) bool
+	libDestroyWallet        func(IotaWalletPtr) bool
+	libDestroySecretManager func(IotaSecretManagerPtr) bool
+	libDestroyString        func(uintptr) bool
 
-	libGetClientFromWallet        func(ptr IotaWalletPtr) IotaClientPtr
-	libGetSecretManagerFromWallet func(ptr IotaWalletPtr) IotaSecretManagerPtr
+	libGetClientFromWallet        func(IotaWalletPtr) IotaClientPtr
+	libGetSecretManagerFromWallet func(IotaWalletPtr) IotaSecretManagerPtr
 
-	libCallClientMethod        func(IotaClientPtr, string) string
-	libCallWalletMethod        func(IotaWalletPtr, string) string
-	libCallSecretManagerMethod func(IotaSecretManagerPtr, string) string
+	libCallClientMethod        func(IotaClientPtr, string) uintptr
+	libCallWalletMethod        func(IotaWalletPtr, string) uintptr
+	libCallSecretManagerMethod func(IotaSecretManagerPtr, string) uintptr
+	libCallUtilsMethod         func(string) uintptr
 
 	libGetLastError func() string
 }
@@ -78,14 +77,19 @@ func NewIotaSDK(libPath string) (*IOTASDK, error) {
 	purego.RegisterLibFunc(&iotaSDKNative.libCallClientMethod, iotaSDK, "call_client_method")
 	purego.RegisterLibFunc(&iotaSDKNative.libCallWalletMethod, iotaSDK, "call_wallet_method")
 	purego.RegisterLibFunc(&iotaSDKNative.libCallSecretManagerMethod, iotaSDK, "call_secret_manager_method")
+	purego.RegisterLibFunc(&iotaSDKNative.libCallUtilsMethod, iotaSDK, "call_utils_method")
 
 	purego.RegisterLibFunc(&iotaSDKNative.libGetLastError, iotaSDK, "binding_get_last_error")
 
 	return &iotaSDKNative, nil
 }
 
-func (i *IOTASDK) Destroy() error {
-	return lib_loader.UnloadLibrary(i.handle)
+func (i *IOTASDK) Utils() *Utils {
+	return &Utils{sdk: i}
+}
+
+func (i *IOTASDK) Destroy() {
+	_ = lib_loader.UnloadLibrary(i.handle)
 }
 
 func (i *IOTASDK) GetLastError() error {
@@ -176,43 +180,60 @@ func (i *IOTASDK) GetSecretManagerFromWallet(iotaWalletPtr IotaWalletPtr) (secre
 	return secretManagerPtr, nil
 }
 
+func (i *IOTASDK) CallUtilsMethod(method any) (response string, err error) {
+	msg, err := serialize(method)
+	if err != nil {
+		return "", err
+	}
+
+	var responsePtr uintptr
+	if responsePtr = i.libCallUtilsMethod(msg); responsePtr == 0 {
+		return "", i.GetLastError()
+	}
+
+	return i.CopyAndDestroyOriginalStringPtr(responsePtr)
+}
+
 func (i *IOTASDK) CallClientMethod(iotaClientPtr IotaClientPtr, method any) (response string, err error) {
 	msg, err := serialize(method)
 	if err != nil {
 		return "", err
 	}
 
-	if response = i.libCallClientMethod(iotaClientPtr, msg); response == "" {
+	var responsePtr uintptr
+	if responsePtr = i.libCallClientMethod(iotaClientPtr, msg); responsePtr == 0 {
 		return "", i.GetLastError()
 	}
 
-	return i.CopyAndDestroyString(&response)
+	return i.CopyAndDestroyOriginalStringPtr(responsePtr)
 }
 
-func (i *IOTASDK) CallWalletMethod(iotaWalletPtr IotaWalletPtr, method any) (response string, err error) {
+func (i *IOTASDK) CallWalletMethod(iotaWalletPtr IotaWalletPtr, method any) (string, error) {
 	msg, err := serialize(method)
 	if err != nil {
 		return "", err
 	}
 
-	if response = i.libCallWalletMethod(iotaWalletPtr, msg); response == "" {
+	var responsePtr uintptr
+	if responsePtr = i.libCallWalletMethod(iotaWalletPtr, msg); responsePtr == 0 {
 		return "", i.GetLastError()
 	}
 
-	return i.CopyAndDestroyString(&response)
+	return i.CopyAndDestroyOriginalStringPtr(responsePtr)
 }
 
-func (i *IOTASDK) CallSecretManagerMethod(iotaSecretManagerPtr IotaSecretManagerPtr, method any) (response string, err error) {
+func (i *IOTASDK) CallSecretManagerMethod(iotaSecretManagerPtr IotaSecretManagerPtr, method any) (string, error) {
 	msg, err := serialize(method)
 	if err != nil {
 		return "", err
 	}
 
-	if response = i.libCallSecretManagerMethod(iotaSecretManagerPtr, msg); response == "" {
+	var responsePtr uintptr
+	if responsePtr = i.libCallSecretManagerMethod(iotaSecretManagerPtr, msg); responsePtr == 0 {
 		return "", i.GetLastError()
 	}
 
-	return i.CopyAndDestroyString(&response)
+	return i.CopyAndDestroyOriginalStringPtr(responsePtr)
 }
 
 func (i *IOTASDK) DestroyClient(client IotaClientPtr) (err error) {
@@ -239,22 +260,17 @@ func (i *IOTASDK) DestroySecretManager(client IotaSecretManagerPtr) (err error) 
 	return nil
 }
 
-func (i *IOTASDK) CopyAndDestroyString(response *string) (string, error) {
-	clonedResponse := strings.Clone(*response)
+func (i *IOTASDK) CopyAndDestroyOriginalStringPtr(response uintptr) (string, error) {
+	goString := GoString(response)
 
-	if err := i.DestroyString(unsafe.Pointer(response)); err != nil {
+	if err := i.DestroyString(response); err != nil {
 		return "", err
 	}
 
-	return clonedResponse, nil
+	return goString, nil
 }
 
-func (i *IOTASDK) DestroyString(ptr unsafe.Pointer) (err error) {
-	// TODO: Properly free strings received from the native lib
-	// As this lib is currently only used in the cli, it does not cause a bigger build up, it's not great nonetheless.
-	// No security related strings (seed, etc) are ever reaching this library.
-	// return nil
-
+func (i *IOTASDK) DestroyString(ptr uintptr) (err error) {
 	if success := i.libDestroyString(ptr); !success {
 		return i.GetLastError()
 	}

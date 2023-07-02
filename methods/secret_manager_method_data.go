@@ -59,3 +59,13 @@ type SignEd25519MethodData struct {
 	// Message corresponds to the JSON schema field "message".
 	Message types.HexEncodedString `json:"message" yaml:"message" mapstructure:"message"`
 }
+
+type GenerateEvmAddressesMethodData struct {
+	// Options corresponds to the JSON schema field "options".
+	Options types.IGenerateAddressesOptions `json:"options" yaml:"options" mapstructure:"options"`
+}
+
+type GenerateEd25519AddressesMethodData struct {
+	// Options corresponds to the JSON schema field "options".
+	Options types.IGenerateAddressesOptions `json:"options" yaml:"options" mapstructure:"options"`
+}

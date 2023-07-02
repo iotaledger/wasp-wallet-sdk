@@ -3,6 +3,7 @@ package test
 import (
 	"os"
 	"runtime"
+	"strconv"
 	"testing"
 
 	"github.com/iotaledger/wasp_wallet_sdk"
@@ -11,9 +12,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	ShimmerNetworkAPI  = "https://api.shimmer.network"
-	UseLedgerSimulator = true
+func FromEnv(envVar string, defaultValue string) string {
+	value := os.Getenv(envVar)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+var (
+	ShimmerNetworkAPI     = FromEnv("TEST_NETWORK_API", "https://api.shimmer.network")
+	UseLedgerSimulator, _ = strconv.ParseBool(FromEnv("TEST_USE_LEDGER_SIMULATOR", "false"))
 )
 
 // Mnemonic chosen by fair dice roll.
@@ -34,7 +43,7 @@ func getIOTASDKLibraryPath() string {
 		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dylib"
 
 	case "linux":
-		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.so"
+		return wd + "/../../iota-sdk/target/release/libiota_sdk_go.so"
 
 	case "windows":
 		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dll"
@@ -44,15 +53,22 @@ func getIOTASDKLibraryPath() string {
 	}
 }
 
-func InitTest(t *testing.T) *wasp_wallet_sdk.IOTASDK {
-	sdk, err := wasp_wallet_sdk.NewIotaSDK(getIOTASDKLibraryPath())
+var sdk *wasp_wallet_sdk.IOTASDK
+
+func GetOrInitTest(t *testing.T) *wasp_wallet_sdk.IOTASDK {
+	var err error
+	if sdk != nil {
+		return sdk
+	}
+
+	sdk, err = wasp_wallet_sdk.NewIotaSDK(getIOTASDKLibraryPath())
 	require.NoError(t, err)
 
 	success, err := sdk.InitLogger(types.ILoggerConfig{
 		LevelFilter: types.LevelFilterTrace,
 	})
-	require.True(t, success)
 	require.NoError(t, err)
+	require.True(t, success)
 
 	return sdk
 }

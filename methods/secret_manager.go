@@ -36,8 +36,14 @@ func GetLedgerNanoStatusMethod() BaseRequest[NoType] {
 	return NewBaseRequestNoData(method)
 }
 
-func GenerateEd25519AddressMethod[T GenerateEd25519AddressMethodData](data T) BaseRequest[T] {
-	method := "generateEd25519Address"
+func GenerateEd25519AddressesMethod[T GenerateEd25519AddressesMethodData](data T) BaseRequest[T] {
+	method := "generateEd25519Addresses"
+
+	return NewBaseRequest(method, data)
+}
+
+func GenerateEVMAddressMethod[T GenerateEvmAddressesMethodData](data T) BaseRequest[T] {
+	method := "generateEvmAddresses"
 
 	return NewBaseRequest(method, data)
 }

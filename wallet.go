@@ -21,12 +21,12 @@ func NewWallet(sdk *IOTASDK, walletPtr IotaWalletPtr, clientPtr IotaClientPtr, s
 	}
 }
 
-func (w *Wallet) Destroy() {
-	_ = w.sdk.DestroyWallet(w.walletPtr)
+func (s *Wallet) Destroy() {
+	_ = s.sdk.DestroyWallet(s.walletPtr)
 }
 
-func (w *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
-	ledgerNanoStatus, err := w.sdk.CallWalletMethod(w.walletPtr, methods.GetLedgerNanoStatusMethod())
+func (s *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
+	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GetLedgerNanoStatusMethod())
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +39,8 @@ func (w *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
 	return status, nil
 }
 
-func (w *Wallet) CreateAccount(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (any, error) {
-	ledgerNanoStatus, err := w.sdk.CallWalletMethod(w.walletPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
+func (s *Wallet) CreateAccount(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (any, error) {
+	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
 		Bech32Hrp: bech32Hrp,
 		Alias:     "Hai",
 	}))
@@ -56,8 +56,8 @@ func (w *Wallet) CreateAccount(addressIndex uint32, accountIndex uint32, bech32H
 	return *address, nil
 }
 
-func (w *Wallet) GenerateEd25519Address(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (string, error) {
-	ledgerNanoStatus, err := w.sdk.CallWalletMethod(w.walletPtr, methods.GenerateEd25519AddressMethod(methods.GenerateEd25519AddressMethodData{
+func (s *Wallet) GenerateEd25519Address(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (string, error) {
+	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GenerateEd25519AddressMethod(methods.GenerateEd25519AddressMethodData{
 		AddressIndex: addressIndex,
 		AccountIndex: accountIndex,
 		Bech32Hrp:    bech32Hrp,
@@ -91,8 +91,19 @@ func BuildBip32Chain(coinType types.CoinType, accountIndex uint32, internalAddre
 	}
 }
 
-func (w *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip32Chain types.IBip32Chain) (*types.Ed25519Signature, error) {
-	signedMessageStr, err := w.sdk.CallSecretManagerMethod(w.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
+func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {
+	success, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.StoreMnemonicMethod(methods.StoreMnemonicMethodData{
+		Mnemonic: mnemonic,
+	}))
+	if err != nil {
+		return false, err
+	}
+
+	return methods.ParseResponseStatus(success, err)
+}
+
+func (s *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip32Chain types.IBip32Chain) (*types.Ed25519Signature, error) {
+	signedMessageStr, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
 		Chain:   bip32Chain,
 	}))
