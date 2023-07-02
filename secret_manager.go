@@ -12,6 +12,7 @@ type SecretManager struct {
 	secretManagerPtr IotaSecretManagerPtr
 }
 
+// NewMnemonicSecretManager creates or opens an in-memory Mnemonic based secret storage
 func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecretManager) (*SecretManager, error) {
 	secretManagerPtr, err := sdk.CreateSecretManager(mnemonicOptions)
 	if err != nil {
@@ -24,6 +25,12 @@ func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecret
 	}, nil
 }
 
+/*
+TODO: The stronghold unlock password gets provided here, should it be put into a secure enclave such as github.com/awnumar/memguard?
+As the password is provided to the external library, an attacker could simply replace the target library, or inject a fraudulent one and catch the password anyway.
+*/
+
+// NewStrongholdSecretManager creates or opens a Stronghold based secret storage
 func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.StrongholdSecretManagerStronghold) (*SecretManager, error) {
 	secretManagerPtr, err := sdk.CreateSecretManager(types.StrongholdSecretManager{Stronghold: strongholdOptions})
 	if err != nil {
@@ -36,6 +43,7 @@ func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.Stronghold
 	}, nil
 }
 
+// NewLedgerSecretManager creates or opens a Ledger based secret storage
 func NewLedgerSecretManager(sdk *IOTASDK, ledgerOptions types.LedgerNanoSecretManager) (*SecretManager, error) {
 	secretManagerPtr, err := sdk.CreateSecretManager(ledgerOptions)
 	if err != nil {
