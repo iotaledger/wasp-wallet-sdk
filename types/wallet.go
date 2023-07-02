@@ -67,6 +67,8 @@ type Ed25519Signature struct {
 	// Message corresponds to the JSON schema field "message".
 	Message string `json:"message" yaml:"message" mapstructure:"message"`
 
+	PublicKey string `json:"publicKey" yaml:"message" mapstructure:"message"`
+
 	// Ed25519Signature signature.
 	Signature string `json:"signature" yaml:"signature" mapstructure:"signature"`
 }
