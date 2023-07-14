@@ -3,6 +3,9 @@ package methods
 import (
 	"encoding/json"
 	"errors"
+	"unsafe"
+
+	"github.com/awnumar/memguard"
 
 	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
@@ -37,14 +40,13 @@ type ResponseEnvelope struct {
 	Payload json.RawMessage `json:"payload"`
 }
 
-func parseResponseEnvelope(responseString string, responseErr error) (*ResponseEnvelope, error) {
+func ParseResponseEnvelope(responseString []byte, responseErr error) (*ResponseEnvelope, error) {
 	if responseErr != nil {
 		return nil, responseErr
 	}
 
 	var responseEnvelope ResponseEnvelope
-
-	if err := json.Unmarshal([]byte(responseString), &responseEnvelope); err != nil {
+	if err := json.Unmarshal(responseString, &responseEnvelope); err != nil {
 		return nil, err
 	}
 
@@ -62,8 +64,8 @@ func parseResponseEnvelope(responseString string, responseErr error) (*ResponseE
 }
 
 // ParseResponse returns a typed response object
-func ParseResponse[T any](responseString string, responseErr error) (*T, error) {
-	responseEnvelope, err := parseResponseEnvelope(responseString, responseErr)
+func ParseResponse[T any](responseString []byte, responseErr error) (*T, error) {
+	responseEnvelope, err := ParseResponseEnvelope(responseString, responseErr)
 	if err != nil {
 		return nil, err
 	}
@@ -76,9 +78,28 @@ func ParseResponse[T any](responseString string, responseErr error) (*T, error) 
 	return response, nil
 }
 
+// ParseResponseProtectedString handles the Payload as a []byte to mitigate unwanted string allocations
+func ParseResponseProtectedString(responseString []byte, responseErr error) (*memguard.Enclave, error) {
+	responseEnvelope, err := ParseResponseEnvelope(responseString, responseErr)
+	if err != nil {
+		return nil, err
+	}
+
+	var buffer string
+	if err := json.Unmarshal(responseEnvelope.Payload, &buffer); err != nil {
+		return nil, err
+	}
+
+	response := memguard.NewEnclave([]byte(buffer))
+	bytes := *(*[]byte)(unsafe.Pointer(&buffer))
+	memguard.WipeBytes(bytes)
+
+	return response, nil
+}
+
 // ParseResponseStatus Returns true or false, whether the request succeeded or not.
-func ParseResponseStatus(responseString string, responseErr error) (bool, error) {
-	responseEnvelope, err := parseResponseEnvelope(responseString, responseErr)
+func ParseResponseStatus(responseString []byte, responseErr error) (bool, error) {
+	responseEnvelope, err := ParseResponseEnvelope(responseString, responseErr)
 	if err != nil {
 		return false, err
 	}

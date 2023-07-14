@@ -3,6 +3,7 @@ package test
 import (
 	"testing"
 
+	"github.com/awnumar/memguard"
 	"github.com/stretchr/testify/require"
 
 	wasp_wallet_sdk "github.com/iotaledger/wasp-wallet-sdk"
@@ -16,13 +17,10 @@ Bare-bones secret manager test without Wallet or Client functionality
 func TestSecretManagerMnemonic(t *testing.T) {
 	sdk := GetOrInitTest(t)
 
-	secretManager, err := wasp_wallet_sdk.NewMnemonicSecretManager(sdk, types.MnemonicSecretManager{
-		Mnemonic: Mnemonic,
-	})
-
-	defer secretManager.Destroy()
+	secretManager, err := wasp_wallet_sdk.NewMnemonicSecretManager(sdk, memguard.NewEnclave([]byte(Mnemonic)))
 	require.NoError(t, err)
 	require.NotNil(t, secretManager)
+	defer secretManager.Destroy()
 
 	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
 	result, err := secretManager.SignTransactionEssence(SignMessageFromEssenceHex, bip32Chain)
@@ -42,20 +40,16 @@ func TestSecretManagerMnemonic(t *testing.T) {
 	ed25519Addresses, err := secretManager.GenerateEd25519Addresses(types.NewRange(0, 10), 0, "smr", types.CoinTypeSMR, nil)
 	require.NoError(t, err)
 	require.NotNil(t, ed25519Address)
-
 	require.Equal(t, ed25519Addresses[0], ed25519Address)
 }
 
 func TestSecretManagerLedger(t *testing.T) {
 	sdk := GetOrInitTest(t)
 
-	secretManager, err := wasp_wallet_sdk.NewLedgerSecretManager(sdk, types.LedgerNanoSecretManager{
-		LedgerNano: UseLedgerSimulator,
-	})
-
-	defer secretManager.Destroy()
+	secretManager, err := wasp_wallet_sdk.NewLedgerSecretManager(sdk, UseLedgerSimulator)
 	require.NoError(t, err)
 	require.NotNil(t, secretManager)
+	defer secretManager.Destroy()
 
 	status, err := secretManager.GetLedgerStatus()
 	require.NoError(t, err)
@@ -91,16 +85,12 @@ func TestSecretManagerLedger(t *testing.T) {
 func TestSecretManagerStronghold(t *testing.T) {
 	sdk := GetOrInitTest(t)
 
-	secretManager, err := wasp_wallet_sdk.NewStrongholdSecretManager(sdk, types.StrongholdSecretManagerStronghold{
-		Password:     "SDFGjrsiogsanfdGSNDFKGn8io%$&)$%P&dfgdfG",
-		SnapshotPath: "./testdb/client.stronghold",
-	})
-
-	defer secretManager.Destroy()
+	secretManager, err := wasp_wallet_sdk.NewStrongholdSecretManager(sdk, memguard.NewEnclave([]byte("4389t!!$$hbg02pgn")), "./testdb/client.stronghold")
 	require.NoError(t, err)
 	require.NotNil(t, secretManager)
+	defer secretManager.Destroy()
 
-	res, err := secretManager.StoreMnemonic(Mnemonic)
+	res, err := secretManager.StoreMnemonic(memguard.NewEnclave([]byte(Mnemonic)))
 	require.NoError(t, err)
 	require.NotEmpty(t, res)
 	t.Log(res)

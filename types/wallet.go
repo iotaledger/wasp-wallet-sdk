@@ -88,10 +88,10 @@ type LedgerNanoSecretManager struct {
 // Secret manager that uses Stronghold.
 type StrongholdSecretManager struct {
 	// Stronghold corresponds to the JSON schema field "stronghold".
-	Stronghold StrongholdSecretManagerStronghold `json:"stronghold" yaml:"stronghold" mapstructure:"stronghold"`
+	Stronghold StrongholdSecretManagerOptions `json:"stronghold" yaml:"stronghold" mapstructure:"stronghold"`
 }
 
-type StrongholdSecretManagerStronghold struct {
+type StrongholdSecretManagerOptions struct {
 	// Password corresponds to the JSON schema field "password".
 	Password string `json:"password,omitempty" yaml:"password,omitempty" mapstructure:"password,omitempty"`
 

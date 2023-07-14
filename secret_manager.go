@@ -3,6 +3,8 @@ package wasp_wallet_sdk
 import (
 	"errors"
 
+	"github.com/awnumar/memguard"
+
 	"github.com/iotaledger/wasp-wallet-sdk/methods"
 	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
@@ -13,8 +15,16 @@ type SecretManager struct {
 }
 
 // NewMnemonicSecretManager creates or opens an in-memory Mnemonic based secret storage
-func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecretManager) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(mnemonicOptions)
+func NewMnemonicSecretManager(sdk *IOTASDK, mnemonic *memguard.Enclave) (*SecretManager, error) {
+	buffer, err := mnemonic.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer buffer.Destroy()
+
+	secretManagerPtr, err := sdk.CreateSecretManager(types.MnemonicSecretManager{
+		Mnemonic: buffer.String(),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -25,14 +35,19 @@ func NewMnemonicSecretManager(sdk *IOTASDK, mnemonicOptions types.MnemonicSecret
 	}, nil
 }
 
-/*
-TODO: The stronghold unlock password gets provided here, should it be put into a secure enclave such as github.com/awnumar/memguard?
-As the password is provided to the external library, an attacker could simply replace the target library, or inject a fraudulent one and catch the password anyway.
-*/
+func NewStrongholdSecretManager(sdk *IOTASDK, password *memguard.Enclave, snapshotPath string) (*SecretManager, error) {
+	buffer, err := password.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer buffer.Destroy()
 
-// NewStrongholdSecretManager creates or opens a Stronghold based secret storage
-func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.StrongholdSecretManagerStronghold) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(types.StrongholdSecretManager{Stronghold: strongholdOptions})
+	secretManagerPtr, err := sdk.CreateSecretManager(types.StrongholdSecretManager{
+		Stronghold: types.StrongholdSecretManagerOptions{
+			Password:     buffer.String(),
+			SnapshotPath: snapshotPath,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +59,10 @@ func NewStrongholdSecretManager(sdk *IOTASDK, strongholdOptions types.Stronghold
 }
 
 // NewLedgerSecretManager creates or opens a Ledger based secret storage
-func NewLedgerSecretManager(sdk *IOTASDK, ledgerOptions types.LedgerNanoSecretManager) (*SecretManager, error) {
-	secretManagerPtr, err := sdk.CreateSecretManager(ledgerOptions)
+func NewLedgerSecretManager(sdk *IOTASDK, isEmulator bool) (*SecretManager, error) {
+	secretManagerPtr, err := sdk.CreateSecretManager(&types.LedgerNanoSecretManager{
+		LedgerNano: isEmulator,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +78,8 @@ func (s *SecretManager) Destroy() {
 }
 
 func (s *SecretManager) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
-	ledgerNanoStatus, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GetLedgerNanoStatusMethod())
+	ledgerNanoStatus, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GetLedgerNanoStatusMethod())
+	defer free()
 	if err != nil {
 		return nil, err
 	}
@@ -75,10 +93,11 @@ func (s *SecretManager) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
 }
 
 func (s *SecretManager) CreateAccount(bech32Hrp string, alias string) (any, error) {
-	ledgerNanoStatus, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
+	ledgerNanoStatus, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
 		Bech32Hrp: bech32Hrp,
 		Alias:     alias,
 	}))
+	defer free()
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +111,7 @@ func (s *SecretManager) CreateAccount(bech32Hrp string, alias string) (any, erro
 }
 
 func (s *SecretManager) GenerateEvmAddresses(addressRange types.Range, accountIndex uint32, bech32Hrp string, options *types.IGenerateAddressOptions) ([]string, error) {
-	evmAddresses, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GenerateEVMAddressMethod(methods.GenerateEvmAddressesMethodData{
+	evmAddresses, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GenerateEVMAddressMethod(methods.GenerateEvmAddressesMethodData{
 		Options: types.IGenerateAddressesOptions{
 			AccountIndex: accountIndex,
 			Bech32Hrp:    bech32Hrp,
@@ -102,6 +121,7 @@ func (s *SecretManager) GenerateEvmAddresses(addressRange types.Range, accountIn
 			Range:        addressRange,
 		},
 	}))
+	defer free()
 	if err != nil {
 		return []string{}, err
 	}
@@ -115,7 +135,7 @@ func (s *SecretManager) GenerateEvmAddresses(addressRange types.Range, accountIn
 }
 
 func (s *SecretManager) GenerateEd25519Addresses(addressRange types.Range, accountIndex uint32, bech32Hrp string, coinType types.CoinType, options *types.IGenerateAddressOptions) ([]string, error) {
-	ledgerNanoStatus, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GenerateEd25519AddressesMethod(methods.GenerateEd25519AddressesMethodData{
+	ledgerNanoStatus, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.GenerateEd25519AddressesMethod(methods.GenerateEd25519AddressesMethodData{
 		Options: types.IGenerateAddressesOptions{
 			AccountIndex: accountIndex,
 			Bech32Hrp:    bech32Hrp,
@@ -125,6 +145,7 @@ func (s *SecretManager) GenerateEd25519Addresses(addressRange types.Range, accou
 			Range:        addressRange,
 		},
 	}))
+	defer free()
 	if err != nil {
 		return []string{}, err
 	}
@@ -149,10 +170,17 @@ func (s *SecretManager) GenerateEd25519Address(addressIndex uint32, accountIndex
 	return addresses[0], nil
 }
 
-func (s *SecretManager) StoreMnemonic(mnemonic string) (bool, error) {
-	success, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.StoreMnemonicMethod(methods.StoreMnemonicMethodData{
-		Mnemonic: mnemonic,
+func (s *SecretManager) StoreMnemonic(mnemonic *memguard.Enclave) (bool, error) {
+	buffer, err := mnemonic.Open()
+	if err != nil {
+		return false, err
+	}
+	defer buffer.Destroy()
+
+	success, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.StoreMnemonicMethod(methods.StoreMnemonicMethodData{
+		Mnemonic: buffer.String(),
 	}))
+	defer free()
 	if err != nil {
 		return false, err
 	}
@@ -161,10 +189,11 @@ func (s *SecretManager) StoreMnemonic(mnemonic string) (bool, error) {
 }
 
 func (s *SecretManager) SignTransactionEssence(txEssence types.HexEncodedString, bip32Chain types.IBip32Chain) (*types.Ed25519Signature, error) {
-	signedMessageStr, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
+	signedMessageStr, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
 		Chain:   bip32Chain,
 	}))
+	defer free()
 	if err != nil {
 		return nil, err
 	}

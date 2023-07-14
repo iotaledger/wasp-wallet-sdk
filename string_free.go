@@ -1,6 +1,12 @@
 package wasp_wallet_sdk
 
-import "unsafe"
+import (
+	"bytes"
+	"fmt"
+	"unsafe"
+
+	"github.com/awnumar/memguard"
+)
 
 /**
 	The purego library can accept proper strings as return values and handle them automatically.
@@ -11,13 +17,34 @@ import "unsafe"
     and instead of strings, uintptrs are used and supplied to the sdks free function `destroy_string`.
 */
 
+//go:noinline
+func CStringGo(str []byte) (*byte, func()) {
+	var b []byte
+
+	if len(str) == 0 {
+		b = []byte{0x0}
+	} else if bytes.HasSuffix(str, []byte{0x0}) {
+		b = make([]byte, len(str))
+		copy(b, str)
+	} else {
+		b = make([]byte, len(str)+1)
+		copy(b, str)
+	}
+	return &b[0], func() {
+		memguard.ScrambleBytes(b)
+		memguard.WipeBytes(b)
+	}
+}
+
 // Copied from https://github.com/ebitengine/purego/blob/main/internal/strings/strings.go
 // copies a char* to a Go string.
-func GoString(c uintptr) string {
+func GoString(c uintptr) ([]byte, func()) {
 	// We take the address and then dereference it to trick go vet from creating a possible misuse of unsafe.Pointer
 	ptr := *(*unsafe.Pointer)(unsafe.Pointer(&c))
 	if ptr == nil {
-		return ""
+		return nil, func() {
+
+		}
 	}
 	var length int
 	for {
@@ -26,5 +53,17 @@ func GoString(c uintptr) string {
 		}
 		length++
 	}
-	return string(unsafe.Slice((*byte)(ptr), length))
+	byteSlice := unsafe.Slice((*byte)(ptr), length)
+
+	// Until now, any data referenced is a pointer to the allocation inside the Rust library
+	// To make use of the data, do a copy and make it possible to free it properly afterwords
+	// It is mandatory to call the returned `free()` function to properly dispose it.
+	goString := make([]byte, length)
+	copy(goString, byteSlice)
+
+	return goString, func() {
+		fmt.Printf("Freeing slice: '%v'\n", string(goString))
+		memguard.ScrambleBytes(byteSlice)
+		memguard.ScrambleBytes(goString)
+	}
 }

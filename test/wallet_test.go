@@ -1,3 +1,5 @@
+//go:build IOTA_SDK_WITH_WALLET
+
 package test
 
 import (
@@ -74,7 +76,7 @@ func TestWalletStronghold(t *testing.T) {
 	wallet, err := sdk.CreateWallet(types.WalletOptions{
 		ClientOptions: &types.ClientOptions{},
 		SecretManager: types.StrongholdSecretManager{
-			Stronghold: types.StrongholdSecretManagerStronghold{
+			Stronghold: types.StrongholdSecretManagerOptions{
 				Password:     "1074",
 				SnapshotPath: "./testdb/stronghold_snapshots",
 			},

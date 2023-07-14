@@ -1,3 +1,5 @@
+//go:build IOTA_SDK_WITH_WALLET
+
 package wasp_wallet_sdk
 
 import (
@@ -10,6 +12,31 @@ type Wallet struct {
 	walletPtr        IotaWalletPtr
 	clientPtr        IotaClientPtr
 	secretManagerPtr IotaSecretManagerPtr
+}
+
+func (i *IOTASDK) CreateWallet(walletOptions types.WalletOptions) (wallet *Wallet, err error) {
+	msg, free, err := serializeGuarded(walletOptions)
+	defer free()
+	if err != nil {
+		return nil, err
+	}
+
+	var walletPtr IotaWalletPtr
+	if walletPtr = i.libCreateWallet(msg); walletPtr == 0 {
+		return nil, i.GetLastError()
+	}
+
+	clientPtr, err := i.GetClientFromWallet(walletPtr)
+	if err != nil {
+		return nil, err
+	}
+
+	secretManagerPtr, err := i.GetSecretManagerFromWallet(walletPtr)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWallet(i, walletPtr, clientPtr, secretManagerPtr), nil
 }
 
 func NewWallet(sdk *IOTASDK, walletPtr IotaWalletPtr, clientPtr IotaClientPtr, secretManagerPtr IotaSecretManagerPtr) *Wallet {
@@ -39,10 +66,10 @@ func (s *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
 	return status, nil
 }
 
-func (s *Wallet) CreateAccount(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (any, error) {
+func (s *Wallet) CreateAccount(alias string, bech32Hrp string, options *types.GenerateAddressOptions) (any, error) {
 	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
 		Bech32Hrp: bech32Hrp,
-		Alias:     "Hai",
+		Alias:     alias,
 	}))
 	if err != nil {
 		return "", err
@@ -73,22 +100,6 @@ func (s *Wallet) GenerateEd25519Address(addressIndex uint32, accountIndex uint32
 	}
 
 	return *address, nil
-}
-
-func BuildBip32Chain(coinType types.CoinType, accountIndex uint32, internalAddress bool, addressIndex uint32) types.IBip32Chain {
-	var internalAddressInt uint32
-
-	if internalAddress {
-		internalAddressInt = 1
-	}
-
-	return types.IBip32Chain{
-		uint32(types.HDWalletType),
-		uint32(coinType),
-		accountIndex,
-		internalAddressInt,
-		addressIndex,
-	}
 }
 
 func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {

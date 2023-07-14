@@ -18,9 +18,10 @@ func TestFirstCon(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, clientPtr)
 
-	response, err := sdk.CallClientMethod(clientPtr, "RUBBISH")
+	response, free, err := sdk.CallClientMethod(clientPtr, "RUBBISH")
 	require.Empty(t, response)
 	require.Error(t, err)
+	defer free()
 
 	t.Log(clientPtr)
 }

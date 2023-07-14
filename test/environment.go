@@ -43,7 +43,7 @@ func getIOTASDKLibraryPath() string {
 		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dylib"
 
 	case "linux":
-		return wd + "/../../iota-sdk/target/release/libiota_sdk_go.so"
+		return wd + "/../../iota-sdk/target/release/libiota_sdk_native.so"
 
 	case "windows":
 		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dll"
