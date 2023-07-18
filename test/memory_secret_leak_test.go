@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"testing"
 
+	"github.com/awnumar/memguard"
 	"github.com/stretchr/testify/require"
 
 	wasp_wallet_sdk "github.com/iotaledger/wasp-wallet-sdk"
@@ -15,37 +16,42 @@ import (
 /**
 	(Run these test one-by-one, all at once will break the tests due to the nature of memory leaks and counting them)
 
-	To validate that the serialization and freeing of memory works, this test does the following:
+	This test validates protected JSON serialization and freeing of memory, to make sure that no secret is left in memory.
+	This test does the following:
 
 Step 1:
-	* Serialize the TestObject (with original golang/json marshal and goccy/go-json +(memguard) as SerializeGuarded)
-		* For the SerializeGuarded call `free()`
+	* Serialize the TestObject (1: with original golang/json marshal and 2: goccy/go-json + memguard that is used in the custom method SerializeGuarded)
+		* For the SerializeGuarded function call `free()`
+		* For the original marshal function call `memguard.ScrambleBytes()` to invalidate the returned bytes
 	* Dump and save the process memory
 
 Step 2:
-	* Read process memory
-    * Scan memory for the serialized json message
+	* Marshal the TestObject again
+	* Read process memory dump from Step 1
+    * Scan memory and count the occurrences of the serialized json message
 
 Reason:
 
-The original Golang JSON marshal function leaks memory and currently leaves **one** copy of the serialized message in memory.
+The original Golang JSON marshal function leaks memory and allocates the marshaled result twice. One for the returned result, one for the internal state pool.
+While the return value can be zeroed/scrambled after it has been used, there is no option to free the copy in the state pool.
 
-There is a second copy of data, which is the returned data that does not automatically free after using.
-While this return value can be zeroed, there is no option to free the copy created by json.marshal internally.
+This is a problem when memory scanners read the memory of an application that handles secrets/private keys/seeds.
 
-This is a problem when memory scanners read the memory of an application handling secrets/private keys/seeds.
+The SerializeGuarded function used in this wrapper uses `go-json` and `memguard`. The go-json marshal function streams the message into a memguard enclave which is internally encrypted and protected
+The go-json marshal function does not create a copy of the serialized message internally as there is no state pool.
+The usage of SerializeGuarded requires `free` to be called eventually, to get rid of the memguard allocation.
 
-The SerializeGuarded function uses `go-json` and `memguard`. The go-json marshal function streams the message into a memguard enclave which is internally encrypted and protected
-It does not create a copy of the serialized message internally.
-The usage of SerializeGuarded requires `free` to get called eventually, to get rid of all copies.
-
-If `free` is called, the hits in memory should therefore be **0**, if free is not called, the hits should be **1**
+If `free` is called, the actual hits in memory should therefore be **0**, if free is not called, the hits should be exactly **1**
 */
 
-func serializeUnsafe[T any](t *testing.T, obj T) []byte {
-	str, err := json.Marshal(obj)
-	require.NoError(t, err)
-	return str
+type TestObject struct {
+	FINDME int
+}
+
+var HEAPDUMP_PATH = ""
+
+var testObject = TestObject{
+	FINDME: 9876431264789234,
 }
 
 func createHeapDump(t *testing.T, name string) string {
@@ -62,28 +68,19 @@ func readHeapDump(t *testing.T, path string) []byte {
 	return buffer
 }
 
-type TestObject struct {
-	FINDME int
+func serializeUnsafe[T any](t *testing.T, obj T) []byte {
+	str, err := json.Marshal(obj)
+	require.NoError(t, err)
+	return str
 }
 
-var testObject = TestObject{
-	FINDME: 9876431264789234,
-}
-
-var HEAPDUMP_PATH = ""
-
-func findMemoryLeaks(t *testing.T) int {
-	require.Greater(t, len(HEAPDUMP_PATH), 0)
-	buffer := readHeapDump(t, HEAPDUMP_PATH)
-
-	target := serializeUnsafe(t, testObject)
-	hits := bytes.Count(buffer, target)
-
-	return hits
-}
-
+//nolint:gocritic
 func testMemoryLeakUnsafeAction(t *testing.T) {
-	_ = serializeUnsafe(t, testObject)
+	serialized := serializeUnsafe(t, testObject)
+
+	// Randomize serialized buffer immediately
+	memguard.ScrambleBytes(serialized)
+
 	HEAPDUMP_PATH = createHeapDump(t, "unsafe_test")
 }
 
@@ -100,23 +97,36 @@ func testMemoryLeakSafeAction(callFree bool) func(t *testing.T) {
 	}
 }
 
-func TestMemoryLeakUnsafeJSONNoMemguard(t *testing.T) {
+func findMemoryLeaks(t *testing.T) int {
+	require.Greater(t, len(HEAPDUMP_PATH), 0)
+	buffer := readHeapDump(t, HEAPDUMP_PATH)
+
+	// Recreate the serialized message created a step before
+	target := serializeUnsafe(t, testObject)
+
+	// Count the occurrences in the memory dump
+	hits := bytes.Count(buffer, target)
+
+	return hits
+}
+
+func TestMemoryLeakUnsafe(t *testing.T) {
 	t.Run("Run unsafe serialization", testMemoryLeakUnsafeAction)
 	t.Run("Find memory leaks", func(t *testing.T) {
-		require.Equal(t, findMemoryLeaks(t), 2)
+		require.Equal(t, 1, findMemoryLeaks(t))
 	})
 }
 
-func TestMemoryLeakWithoutFree(t *testing.T) {
+func TestMemoryLeakProtectionWithoutFree(t *testing.T) {
 	t.Run("Run guarded serialization without calling free", testMemoryLeakSafeAction(false))
 	t.Run("Find memory leaks", func(t *testing.T) {
-		require.Equal(t, findMemoryLeaks(t), 1)
+		require.Equal(t, 1, findMemoryLeaks(t))
 	})
 }
 
-func TestMemoryLeakWithFree(t *testing.T) {
+func TestMemoryLeakProtectionWithFree(t *testing.T) {
 	t.Run("Run guarded serialization with calling free", testMemoryLeakSafeAction(true))
 	t.Run("Find memory leaks", func(t *testing.T) {
-		require.Equal(t, findMemoryLeaks(t), 0)
+		require.Equal(t, 0, findMemoryLeaks(t))
 	})
 }
