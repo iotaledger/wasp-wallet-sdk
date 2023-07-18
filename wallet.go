@@ -113,10 +113,10 @@ func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {
 	return methods.ParseResponseStatus(success, err)
 }
 
-func (s *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip32Chain types.IBip32Chain) (*types.Ed25519Signature, error) {
+func (s *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip44Chain types.Bip44Chain) (*types.Ed25519Signature, error) {
 	signedMessageStr, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
-		Chain:   bip32Chain,
+		Chain:   bip44Chain,
 	}))
 	if err != nil {
 		return nil, err

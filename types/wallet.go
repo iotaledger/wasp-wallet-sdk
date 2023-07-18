@@ -61,6 +61,9 @@ type GenerateAddressOptions struct {
 type IGenerateAddressOptions struct {
 	// Display the address on ledger devices.
 	LedgerNanoPrompt bool `json:"ledgerNanoPrompt" yaml:"ledgerNanoPrompt" mapstructure:"ledgerNanoPrompt"`
+
+	// Internal addresses
+	Internal bool `json:"internal,omitempty" yaml:"internal,omitempty" mapstructure:"internal,omitempty"`
 }
 
 type Ed25519Signature struct {
@@ -154,7 +157,7 @@ type IOutputMetadataResponse struct {
 // Data for transaction inputs for signing and ordering of unlock blocks
 type InputSigningData struct {
 	// The chain derived from seed, only for ed25519 addresses
-	Chain IBip32Chain `json:"chain,omitempty" yaml:"chain,omitempty" mapstructure:"chain,omitempty"`
+	Chain Bip44Chain `json:"chain,omitempty" yaml:"chain,omitempty" mapstructure:"chain,omitempty"`
 
 	// The output
 	Output InputSigningDataOutput `json:"output" yaml:"output" mapstructure:"output"`
@@ -177,7 +180,7 @@ type Remainder struct {
 	Address RemainderAddress `json:"address" yaml:"address" mapstructure:"address"`
 
 	// The chain derived from seed, for the remainder addresses
-	Chain IBip32Chain `json:"chain,omitempty" yaml:"chain,omitempty" mapstructure:"chain,omitempty"`
+	Chain Bip44Chain `json:"chain,omitempty" yaml:"chain,omitempty" mapstructure:"chain,omitempty"`
 
 	// The remainder output
 	Output RemainderOutput `json:"output" yaml:"output" mapstructure:"output"`
@@ -224,9 +227,6 @@ type IGenerateAddressesOptions struct {
 
 	// CoinType corresponds to the JSON schema field "coinType".
 	CoinType CoinType `json:"coinType,omitempty" yaml:"coinType,omitempty" mapstructure:"coinType,omitempty"`
-
-	// Internal addresses
-	Internal bool `json:"internal,omitempty" yaml:"internal,omitempty" mapstructure:"internal,omitempty"`
 
 	// Options corresponds to the JSON schema field "options".
 	Options *IGenerateAddressOptions `json:"options,omitempty" yaml:"options,omitempty" mapstructure:"options,omitempty"`

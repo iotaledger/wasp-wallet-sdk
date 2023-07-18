@@ -2,7 +2,6 @@ package wasp_wallet_sdk
 
 import (
 	"bytes"
-	"fmt"
 	"unsafe"
 
 	"github.com/awnumar/memguard"
@@ -20,7 +19,6 @@ import (
 //go:noinline
 func CStringGo(str []byte) (*byte, func()) {
 	var b []byte
-
 	if len(str) == 0 {
 		b = []byte{0x0}
 	} else if bytes.HasSuffix(str, []byte{0x0}) {
@@ -62,8 +60,6 @@ func GoString(c uintptr) ([]byte, func()) {
 	copy(goString, byteSlice)
 
 	return goString, func() {
-		fmt.Printf("Freeing slice: '%v'\n", string(goString))
-		memguard.ScrambleBytes(byteSlice)
 		memguard.ScrambleBytes(goString)
 	}
 }

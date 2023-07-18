@@ -33,7 +33,7 @@ func TestWalletMnemonic(t *testing.T) {
 
 	t.Log(wallet)
 
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
+	bip32Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
 	result, err := wallet.SignTransactionEssence(SignMessageFromEssenceHex, bip32Chain)
 
 	require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestWalletLedger(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, address)
 
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
+	bip32Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
 	signedEssence, err := wallet.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip32Chain)
 	require.NoError(t, err)
 	require.NotEmpty(t, signedEssence)
@@ -98,7 +98,7 @@ func TestWalletStronghold(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, address)
 
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
+	bip32Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
 	signedEssence, err := wallet.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip32Chain)
 	require.NoError(t, err)
 	require.NotEmpty(t, signedEssence)

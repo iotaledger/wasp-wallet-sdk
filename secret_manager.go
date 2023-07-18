@@ -116,7 +116,6 @@ func (s *SecretManager) GenerateEvmAddresses(addressRange types.Range, accountIn
 			AccountIndex: accountIndex,
 			Bech32Hrp:    bech32Hrp,
 			CoinType:     types.CoinTypeEther,
-			Internal:     false,
 			Options:      options,
 			Range:        addressRange,
 		},
@@ -140,7 +139,6 @@ func (s *SecretManager) GenerateEd25519Addresses(addressRange types.Range, accou
 			AccountIndex: accountIndex,
 			Bech32Hrp:    bech32Hrp,
 			CoinType:     coinType,
-			Internal:     false,
 			Options:      options,
 			Range:        addressRange,
 		},
@@ -188,10 +186,10 @@ func (s *SecretManager) StoreMnemonic(mnemonic *memguard.Enclave) (bool, error) 
 	return methods.ParseResponseStatus(success, err)
 }
 
-func (s *SecretManager) SignTransactionEssence(txEssence types.HexEncodedString, bip32Chain types.IBip32Chain) (*types.Ed25519Signature, error) {
+func (s *SecretManager) SignTransactionEssence(txEssence types.HexEncodedString, bip44Chain types.Bip44Chain) (*types.Ed25519Signature, error) {
 	signedMessageStr, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
-		Chain:   bip32Chain,
+		Chain:   bip44Chain,
 	}))
 	defer free()
 	if err != nil {

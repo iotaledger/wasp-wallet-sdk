@@ -2,27 +2,15 @@ package wasp_wallet_sdk
 
 import (
 	"errors"
-	"fmt"
-
-	"github.com/goccy/go-json"
 
 	"github.com/awnumar/memguard"
+	"github.com/goccy/go-json"
 
 	"github.com/iotaledger/wasp-wallet-sdk/lib_loader"
 	"github.com/iotaledger/wasp-wallet-sdk/types"
 
 	"github.com/ebitengine/purego"
 )
-
-/*
-func serialize[T any](obj T) (string, error) {
-	jsonMessage, err := json.Marshal(obj)
-	if err != nil {
-		return "", err
-	}
-
-	return string(jsonMessage), nil
-}*/
 
 type (
 	IotaClientPtr        uintptr
@@ -35,11 +23,11 @@ type (
 type IOTASDK struct {
 	handle uintptr
 
-	libInitLogger func(ProtectedStringPtr) bool
+	libInitLogger func(*byte) bool
 
-	libCreateClient        func(ProtectedStringPtr) IotaClientPtr
-	libCreateWallet        func(ProtectedStringPtr) IotaWalletPtr
-	libCreateSecretManager func(ProtectedStringPtr) IotaSecretManagerPtr
+	libCreateClient        func(*byte) IotaClientPtr
+	libCreateWallet        func(*byte) IotaWalletPtr
+	libCreateSecretManager func(*byte) IotaSecretManagerPtr
 
 	libDestroyClient        func(IotaClientPtr) bool
 	libDestroyWallet        func(IotaWalletPtr) bool
@@ -49,10 +37,10 @@ type IOTASDK struct {
 	libGetClientFromWallet        func(IotaWalletPtr) IotaClientPtr
 	libGetSecretManagerFromWallet func(IotaWalletPtr) IotaSecretManagerPtr
 
-	libCallClientMethod        func(IotaClientPtr, ProtectedStringPtr) uintptr
-	libCallWalletMethod        func(IotaWalletPtr, ProtectedStringPtr) uintptr
-	libCallSecretManagerMethod func(IotaSecretManagerPtr, ProtectedStringPtr) uintptr
-	libCallUtilsMethod         func(ProtectedStringPtr) uintptr
+	libCallClientMethod        func(IotaClientPtr, *byte) uintptr
+	libCallWalletMethod        func(IotaWalletPtr, *byte) uintptr
+	libCallSecretManagerMethod func(IotaSecretManagerPtr, *byte) uintptr
+	libCallUtilsMethod         func(*byte) uintptr
 
 	libGetLastError func() string
 }
@@ -78,11 +66,9 @@ func serializeGuarded(obj any) (ProtectedStringPtr, func(), error) {
 		return nil, func() {}, err
 	}
 
-	buf.Freeze()
 	strPointer, cfree := CStringGo(buf.Data())
 
 	return strPointer, func() {
-		fmt.Printf("Freeing slice: '%v'\n", buf.String())
 		buf.Destroy()
 		cfree()
 	}, nil

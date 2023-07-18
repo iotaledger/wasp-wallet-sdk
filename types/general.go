@@ -1,7 +1,13 @@
 package types
 
+type Bip44Chain struct {
+	CoinType     uint32 `json:"coinType" yaml:"coinType" mapstructure:"coinType"`
+	Account      uint32 `json:"account" yaml:"account" mapstructure:"account"`
+	Change       uint32 `json:"change" yaml:"change" mapstructure:"change"`
+	AddressIndex uint32 `json:"addressIndex" yaml:"addressIndex" mapstructure:"addressIndex"`
+}
+
 type (
-	IBip32Chain      [5]uint32
 	HexEncodedString string
 )
 

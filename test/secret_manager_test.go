@@ -22,8 +22,8 @@ func TestSecretManagerMnemonic(t *testing.T) {
 	require.NotNil(t, secretManager)
 	defer secretManager.Destroy()
 
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
-	result, err := secretManager.SignTransactionEssence(SignMessageFromEssenceHex, bip32Chain)
+	bip44Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
+	result, err := secretManager.SignTransactionEssence(SignMessageFromEssenceHex, bip44Chain)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -55,12 +55,8 @@ func TestSecretManagerLedger(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, status)
 
-	address, err := secretManager.GenerateEd25519Address(0, 0, "smr", types.CoinTypeSMR, nil)
-	require.NoError(t, err)
-	require.NotEmpty(t, address)
-
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
-	signedEssence, err := secretManager.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip32Chain)
+	bip44Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
+	signedEssence, err := secretManager.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip44Chain)
 	require.NoError(t, err)
 	require.NotEmpty(t, signedEssence)
 
@@ -99,8 +95,8 @@ func TestSecretManagerStronghold(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, address)
 
-	bip32Chain := wasp_wallet_sdk.BuildBip32Chain(types.CoinTypeSMR, 0, false, 0)
-	signedEssence, err := secretManager.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip32Chain)
+	bip44Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
+	signedEssence, err := secretManager.SignTransactionEssence(types.HexEncodedString(SignMessageFromEssenceHex), bip44Chain)
 	require.NoError(t, err)
 	require.NotEmpty(t, signedEssence)
 

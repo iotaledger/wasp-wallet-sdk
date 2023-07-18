@@ -18,7 +18,7 @@ type GenerateEd25519AddressMethodData struct {
 
 type SignSecp256K1EcdsaMethodData struct {
 	// Chain corresponds to the JSON schema field "chain".
-	Chain types.IBip32Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
+	Chain types.Bip44Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
 
 	// Message corresponds to the JSON schema field "message".
 	Message types.HexEncodedString `json:"message" yaml:"message" mapstructure:"message"`
@@ -31,7 +31,7 @@ type StoreMnemonicMethodData struct {
 
 type SignatureUnlockMethodData struct {
 	// Chain corresponds to the JSON schema field "chain".
-	Chain types.IBip32Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
+	Chain types.Bip44Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
 
 	// SecretManager corresponds to the JSON schema field "secretManager".
 	SecretManager types.SignatureUnlockMethodDataSecretManager `json:"secretManager" yaml:"secretManager" mapstructure:"secretManager"`
@@ -54,7 +54,7 @@ type SignTransactionMethodDataSecretManager interface{}
 
 type SignEd25519MethodData struct {
 	// Chain corresponds to the JSON schema field "chain".
-	Chain types.IBip32Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
+	Chain types.Bip44Chain `json:"chain" yaml:"chain" mapstructure:"chain"`
 
 	// Message corresponds to the JSON schema field "message".
 	Message types.HexEncodedString `json:"message" yaml:"message" mapstructure:"message"`
