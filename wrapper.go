@@ -47,7 +47,7 @@ type IOTASDK struct {
 
 // Encodes an object into a JSON string protected by memguard
 // Uses an alternative JSON library to mitigate hidden copies of the serialized message.
-func serializeGuarded(obj any) (ProtectedStringPtr, func(), error) {
+func SerializeGuarded(obj any) (ProtectedStringPtr, func(), error) {
 	stream := memguard.NewStream()
 
 	err := json.NewEncoder(stream).Encode(obj)
@@ -126,7 +126,7 @@ func (i *IOTASDK) GetLastError() error {
 }
 
 func (i *IOTASDK) InitLogger(loggerConfig types.ILoggerConfig) (bool, error) {
-	msg, free, err := serializeGuarded(loggerConfig)
+	msg, free, err := SerializeGuarded(loggerConfig)
 	defer free()
 	if err != nil {
 		return false, err
@@ -140,7 +140,7 @@ func (i *IOTASDK) InitLogger(loggerConfig types.ILoggerConfig) (bool, error) {
 }
 
 func (i *IOTASDK) CreateClient(clientOptions types.ClientOptions) (clientPtr IotaClientPtr, err error) {
-	msg, free, err := serializeGuarded(clientOptions)
+	msg, free, err := SerializeGuarded(clientOptions)
 	defer free()
 	if err != nil {
 		return 0, err
@@ -154,7 +154,7 @@ func (i *IOTASDK) CreateClient(clientOptions types.ClientOptions) (clientPtr Iot
 }
 
 func (i *IOTASDK) CreateSecretManager(secretManagerOptions types.WalletOptionsSecretManager) (secretManagerPtr IotaSecretManagerPtr, err error) {
-	bytes, free, err := serializeGuarded(secretManagerOptions)
+	bytes, free, err := SerializeGuarded(secretManagerOptions)
 	defer free()
 	if err != nil {
 		return 0, err
@@ -184,7 +184,7 @@ func (i *IOTASDK) GetSecretManagerFromWallet(iotaWalletPtr IotaWalletPtr) (secre
 }
 
 func (i *IOTASDK) CallUtilsMethod(method any) (response []byte, free func(), err error) {
-	msg, free, err := serializeGuarded(method)
+	msg, free, err := SerializeGuarded(method)
 	defer free()
 	if err != nil {
 		return nil, func() {}, err
@@ -199,7 +199,7 @@ func (i *IOTASDK) CallUtilsMethod(method any) (response []byte, free func(), err
 }
 
 func (i *IOTASDK) CallClientMethod(iotaClientPtr IotaClientPtr, method any) (response []byte, free func(), err error) {
-	msg, free, err := serializeGuarded(method)
+	msg, free, err := SerializeGuarded(method)
 	defer free()
 	if err != nil {
 		return nil, func() {}, err
@@ -214,7 +214,7 @@ func (i *IOTASDK) CallClientMethod(iotaClientPtr IotaClientPtr, method any) (res
 }
 
 func (i *IOTASDK) CallWalletMethod(iotaWalletPtr IotaWalletPtr, method any) ([]byte, func(), error) {
-	msg, free, err := serializeGuarded(method)
+	msg, free, err := SerializeGuarded(method)
 	defer free()
 	if err != nil {
 		return nil, func() {}, err
@@ -229,7 +229,7 @@ func (i *IOTASDK) CallWalletMethod(iotaWalletPtr IotaWalletPtr, method any) ([]b
 }
 
 func (i *IOTASDK) CallSecretManagerMethod(iotaSecretManagerPtr IotaSecretManagerPtr, method any) ([]byte, func(), error) {
-	msg, free, err := serializeGuarded(method)
+	msg, free, err := SerializeGuarded(method)
 	defer free()
 	if err != nil {
 		return nil, func() {}, err

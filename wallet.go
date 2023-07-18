@@ -15,7 +15,7 @@ type Wallet struct {
 }
 
 func (i *IOTASDK) CreateWallet(walletOptions types.WalletOptions) (wallet *Wallet, err error) {
-	msg, free, err := serializeGuarded(walletOptions)
+	msg, free, err := SerializeGuarded(walletOptions)
 	defer free()
 	if err != nil {
 		return nil, err
