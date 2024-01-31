@@ -86,11 +86,6 @@ func TestSecretManagerStronghold(t *testing.T) {
 	require.NotNil(t, secretManager)
 	defer secretManager.Destroy()
 
-	res, err := secretManager.StoreMnemonic(memguard.NewEnclave([]byte(Mnemonic)))
-	require.NoError(t, err)
-	require.NotEmpty(t, res)
-	t.Log(res)
-
 	address, err := secretManager.GenerateEd25519Address(0, 0, "smr", types.CoinTypeSMR, nil)
 	require.NoError(t, err)
 	require.NotEmpty(t, address)

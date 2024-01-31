@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -40,13 +41,13 @@ func getIOTASDKLibraryPath() string {
 
 	switch runtime.GOOS {
 	case "darwin":
-		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dylib"
+		return wd + "/../../iota-sdk-native-bindings/target/release/libiota_sdk.dylib"
 
 	case "linux":
-		return wd + "/../../iota-sdk/target/release/libiota_sdk_native.so"
+		return wd + "/../../iota-sdk-native-bindings/target/debug/libiota_sdk.so"
 
 	case "windows":
-		return wd + "/../../iota-sdk/target/debug/libiota_sdk_go.dll"
+		return wd + "/../../iota-sdk-native-bindings/target/release/libiota_sdk.dll"
 
 	default:
 		return ""
@@ -63,6 +64,8 @@ func GetOrInitTest(t *testing.T) *wasp_wallet_sdk.IOTASDK {
 
 	sdk, err = wasp_wallet_sdk.NewIotaSDK(getIOTASDKLibraryPath())
 	require.NoError(t, err)
+
+	fmt.Println(getIOTASDKLibraryPath())
 
 	success, err := sdk.InitLogger(types.ILoggerConfig{
 		LevelFilter: types.LevelFilterTrace,

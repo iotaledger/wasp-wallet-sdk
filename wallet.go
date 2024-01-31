@@ -1,8 +1,12 @@
-//go:build IOTA_SDK_WITH_WALLET
+// //go:build IOTA_SDK_WITH_WALLET
 
 package wasp_wallet_sdk
 
 import (
+	"fmt"
+
+	"github.com/ebitengine/purego"
+
 	"github.com/iotaledger/wasp-wallet-sdk/methods"
 	"github.com/iotaledger/wasp-wallet-sdk/types"
 )
@@ -53,7 +57,9 @@ func (s *Wallet) Destroy() {
 }
 
 func (s *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
-	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GetLedgerNanoStatusMethod())
+	ledgerNanoStatus, free, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GetLedgerNanoStatusMethod())
+	defer free()
+
 	if err != nil {
 		return nil, err
 	}
@@ -67,10 +73,11 @@ func (s *Wallet) GetLedgerStatus() (*types.LedgerNanoStatus, error) {
 }
 
 func (s *Wallet) CreateAccount(alias string, bech32Hrp string, options *types.GenerateAddressOptions) (any, error) {
-	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
+	ledgerNanoStatus, free, err := s.sdk.CallWalletMethod(s.walletPtr, methods.CreateAccountMethod(methods.CreateAccountPayloadMethodData{
 		Bech32Hrp: bech32Hrp,
 		Alias:     alias,
 	}))
+	defer free()
 	if err != nil {
 		return "", err
 	}
@@ -84,12 +91,13 @@ func (s *Wallet) CreateAccount(alias string, bech32Hrp string, options *types.Ge
 }
 
 func (s *Wallet) GenerateEd25519Address(addressIndex uint32, accountIndex uint32, bech32Hrp string, options *types.GenerateAddressOptions) (string, error) {
-	ledgerNanoStatus, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GenerateEd25519AddressMethod(methods.GenerateEd25519AddressMethodData{
+	ledgerNanoStatus, free, err := s.sdk.CallWalletMethod(s.walletPtr, methods.GenerateEd25519AddressMethod(methods.GenerateEd25519AddressMethodData{
 		AddressIndex: addressIndex,
 		AccountIndex: accountIndex,
 		Bech32Hrp:    bech32Hrp,
 		Options:      options,
 	}))
+	defer free()
 	if err != nil {
 		return "", err
 	}
@@ -103,9 +111,10 @@ func (s *Wallet) GenerateEd25519Address(addressIndex uint32, accountIndex uint32
 }
 
 func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {
-	success, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.StoreMnemonicMethod(methods.StoreMnemonicMethodData{
+	success, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.StoreMnemonicMethod(methods.StoreMnemonicMethodData{
 		Mnemonic: mnemonic,
 	}))
+	defer free()
 	if err != nil {
 		return false, err
 	}
@@ -114,13 +123,39 @@ func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {
 }
 
 func (s *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip44Chain types.Bip44Chain) (*types.Ed25519Signature, error) {
-	signedMessageStr, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
+	signedMessageStr, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
 		Chain:   bip44Chain,
 	}))
+	defer free()
 	if err != nil {
 		return nil, err
 	}
 
 	return methods.ParseResponse[types.Ed25519Signature](signedMessageStr, err)
+}
+
+func (s *Wallet) ListenToUpdates() error {
+	events := "[0,1,2,3,4,5]"
+	eventsPtr, _ := CStringGo([]byte(events))
+
+	cb := func(b uintptr) {
+		fmt.Printf("HAI\n")
+		str, free, err := s.sdk.CopyAndDestroyOriginalStringPtr(b)
+		defer free()
+
+		fmt.Println(err)
+
+		fmt.Printf(string(str))
+	}
+
+	cbptr := purego.NewCallback(cb)
+
+	res := s.sdk.libListenWallet(s.walletPtr, eventsPtr, cbptr)
+	if !res {
+		fmt.Printf("ERR \n")
+		return s.sdk.GetLastError()
+	}
+
+	return nil
 }

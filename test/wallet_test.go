@@ -40,6 +40,38 @@ func TestWalletMnemonic(t *testing.T) {
 	require.NotNil(t, result)
 }
 
+func TestWalletEventsWithLedger(t *testing.T) {
+	sdk := GetOrInitTest(t)
+
+	wallet, err := sdk.CreateWallet(types.WalletOptions{
+		ClientOptions: &types.ClientOptions{},
+		SecretManager: types.LedgerNanoSecretManager{
+			LedgerNano: UseLedgerSimulator,
+		},
+		StoragePath: "./testdb/ledger",
+		CoinType:    types.CoinTypeSMR,
+	})
+	defer wallet.Destroy()
+	require.NoError(t, err)
+	require.NotNil(t, wallet)
+
+	go wallet.ListenToUpdates()
+
+	status, err := wallet.GetLedgerStatus()
+	require.NoError(t, err)
+	require.NotNil(t, status)
+
+	address, err := wallet.GenerateEd25519Address(0, 0, "smr", nil)
+	require.NoError(t, err)
+	require.NotEmpty(t, address)
+
+	bip32Chain := wasp_wallet_sdk.BuildBip44Chain(types.CoinTypeSMR, 0, 0)
+	result, err := wallet.SignTransactionEssence(SignMessageFromEssenceHex, bip32Chain)
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
 func TestWalletLedger(t *testing.T) {
 	sdk := GetOrInitTest(t)
 
