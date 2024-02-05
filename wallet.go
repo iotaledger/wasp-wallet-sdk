@@ -122,6 +122,21 @@ func (s *Wallet) StoreMnemonic(mnemonic string) (bool, error) {
 	return methods.ParseResponseStatus(success, err)
 }
 
+func (s *Wallet) CallAccountMethod(accountId uint32, method types.BaseCallAccountMethodWrap[any]) (any, error) {
+	call := types.BaseCallAccountMethod[types.BaseCallAccountMethodWrap[any]]{
+		AccountId: accountId,
+		Method:    method,
+	}
+
+	result, free, err := s.sdk.CallWalletMethod(s.walletPtr, methods.CallAccountMethod(call))
+	defer free()
+	if err != nil {
+		return false, err
+	}
+
+	return methods.ParseResponseStatus(result, err)
+}
+
 func (s *Wallet) SignTransactionEssence(txEssence types.HexEncodedString, bip44Chain types.Bip44Chain) (*types.Ed25519Signature, error) {
 	signedMessageStr, free, err := s.sdk.CallSecretManagerMethod(s.secretManagerPtr, methods.SignEd25519Method(methods.SignEd25519MethodData{
 		Message: txEssence,
@@ -144,9 +159,10 @@ func (s *Wallet) ListenToUpdates() error {
 		str, free, err := s.sdk.CopyAndDestroyOriginalStringPtr(b)
 		defer free()
 
+		// TODO
 		fmt.Println(err)
-
-		fmt.Printf(string(str))
+		fmt.Println("LEDGER EVENT FIRED")
+		fmt.Printf("%s\n", string(str))
 	}
 
 	cbptr := purego.NewCallback(cb)

@@ -40,6 +40,31 @@ func TestWalletMnemonic(t *testing.T) {
 	require.NotNil(t, result)
 }
 
+func TestWalletCallAccountMethod(t *testing.T) {
+	sdk := GetOrInitTest(t)
+
+	wallet, err := sdk.CreateWallet(types.WalletOptions{
+		ClientOptions: &types.ClientOptions{},
+		SecretManager: types.LedgerNanoSecretManager{
+			LedgerNano: UseLedgerSimulator,
+		},
+		StoragePath: "./testdb/ledger",
+		CoinType:    types.CoinTypeSMR,
+	})
+	wallet.ListenToUpdates()
+	defer wallet.Destroy()
+
+	require.NoError(t, err)
+	require.NotNil(t, wallet)
+
+	result, err := wallet.CallAccountMethod(0, types.NewGenerateAccountEd25519Addresses(1, types.GenerateAddressOptions{
+		LedgerNanoPrompt: true,
+		Internal:         false,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, result)
+}
+
 func TestWalletEventsWithLedger(t *testing.T) {
 	sdk := GetOrInitTest(t)
 
@@ -51,11 +76,12 @@ func TestWalletEventsWithLedger(t *testing.T) {
 		StoragePath: "./testdb/ledger",
 		CoinType:    types.CoinTypeSMR,
 	})
+	wallet.ListenToUpdates()
+
 	defer wallet.Destroy()
+
 	require.NoError(t, err)
 	require.NotNil(t, wallet)
-
-	go wallet.ListenToUpdates()
 
 	status, err := wallet.GetLedgerStatus()
 	require.NoError(t, err)
@@ -124,7 +150,6 @@ func TestWalletStronghold(t *testing.T) {
 	res, err := wallet.StoreMnemonic(Mnemonic)
 	require.NoError(t, err)
 	require.NotEmpty(t, res)
-	t.Log(res)
 
 	address, err := wallet.GenerateEd25519Address(0, 0, "smr", nil)
 	require.NoError(t, err)
