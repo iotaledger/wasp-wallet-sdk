@@ -5,10 +5,10 @@ go 1.20
 require (
 	github.com/avelex/procmem v0.0.0-20230620042645-95229f08a1c9
 	github.com/awnumar/memguard v0.22.3
-	github.com/ebitengine/purego v0.4.0-alpha.4
+	github.com/ebitengine/purego v0.6.0-alpha.5
 	github.com/goccy/go-json v0.10.2
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/sys v0.9.0
+	golang.org/x/sys v0.16.0
 )
 
 require (

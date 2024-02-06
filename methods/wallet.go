@@ -30,6 +30,12 @@ func CreateAccountMethod[T CreateAccountPayloadMethodData](data T) BaseRequest[T
 	return NewBaseRequest(method, data)
 }
 
+func CallAccountMethod[T any](data T) BaseRequest[T] {
+	method := "callAccountMethod"
+
+	return NewBaseRequest(method, data)
+}
+
 func GetAccountIndexesMethod() BaseRequest[NoType] {
 	method := "getAccountIndexes"
 

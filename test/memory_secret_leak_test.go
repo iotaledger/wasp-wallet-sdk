@@ -14,13 +14,13 @@ import (
 )
 
 /**
-	(Run these test one-by-one, all at once will break the tests due to the nature of memory leaks and counting them)
+	(Run these tests one-by-one. All at once will break the tests due to the nature of memory leaks and counting them)
 
 	This test validates protected JSON serialization and freeing of memory, to make sure that no secret is left in memory.
 	This test does the following:
 
 Step 1:
-	* Serialize the TestObject (1: with original golang/json marshal and 2: goccy/go-json + memguard that is used in the custom method SerializeGuarded)
+	* Serialize the TestObject (1: with original golang/json marshal and 2: with goccy/go-json + memguard that is used in the custom method "SerializeGuarded")
 		* For the SerializeGuarded function call `free()`
 		* For the original marshal function call `memguard.ScrambleBytes()` to invalidate the returned bytes
 	* Dump and save the process memory

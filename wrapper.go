@@ -42,12 +42,14 @@ type IOTASDK struct {
 	libCallSecretManagerMethod func(IotaSecretManagerPtr, *byte) uintptr
 	libCallUtilsMethod         func(*byte) uintptr
 
+	libListenWallet func(IotaWalletPtr, *byte, uintptr) bool // uintptr is a callback (purego.NewCallback)
 	libGetLastError func() string
 }
 
 // Encodes an object into a JSON string protected by memguard
 // Uses an alternative JSON library to mitigate hidden copies of the serialized message.
 func SerializeGuarded(obj any) (ProtectedStringPtr, func(), error) {
+
 	stream := memguard.NewStream()
 
 	err := json.NewEncoder(stream).Encode(obj)
@@ -103,6 +105,7 @@ func NewIotaSDK(libPath string) (*IOTASDK, error) {
 	purego.RegisterLibFunc(&iotaSDKNative.libCallSecretManagerMethod, iotaSDK, "call_secret_manager_method")
 	purego.RegisterLibFunc(&iotaSDKNative.libCallUtilsMethod, iotaSDK, "call_utils_method")
 
+	purego.RegisterLibFunc(&iotaSDKNative.libListenWallet, iotaSDK, "listen_wallet")
 	purego.RegisterLibFunc(&iotaSDKNative.libGetLastError, iotaSDK, "binding_get_last_error")
 
 	return &iotaSDKNative, nil
